@@ -1,0 +1,167 @@
+---
+title: "Graphs for CHARMS Data"
+author: "Rebecca Reich"
+date: "2024-12-16"
+output: pdf_document
+---
+
+
+```{r block1, eval = TRUE}
+install.packages("readxl")
+install.packages("tidyverse")
+install.packages("ggplot2")
+install.packages("dplyr")
+library(readxl)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+file <- "data.xlsx"
+sheets <- excel_sheets(file) # tabs within the excel sheet
+print(sheets)
+```
+# Data Input
+```{r}
+# 5) Data Input
+data3 <- read_excel(file, sheet= "data input")
+datasets <- data3[5:14, c(4,5)];
+colnames(datasets) <- c('Input', 'Number of Publications')
+
+datasets$'Number of Publications' <- as.numeric(datasets$'Number of Publications')
+datasets$'Input'<- factor(datasets$'Input', levels=unique(datasets$'Input')) # defining levels to be the unique order of algos
+ggplot(datasets, aes(x=datasets$'Number of Publications', y=datasets$'Input')) +
+  geom_bar(stat='identity', fill='navy') +
+  labs(title='Data Inputs', x= 'Number of Publications', y='Input') +
+  theme(
+  panel.background = element_rect(fill = "white"),      # White panel background
+  panel.grid.major.x = element_blank(),                # Clear background
+  panel.grid.major.y = element_line(color = "lightblue"), # Added horizontal blue gridlines
+  aspect.ratio=2/1.5) 
+
+```
+
+
+# Outcomes
+```{r block2, eval = TRUE}
+
+# 6) Outcomes
+data1 <- read_excel(file, sheet= "outcomes")
+dataset1 <- data1[6:10, c(4,5)];
+colnames(dataset1) <- c('Outcomes', 'Count')
+
+dataset1$'Count' <- as.numeric(dataset1$'Count')
+dataset1$'Outcomes'<- factor(dataset1$'Outcomes', levels=unique(dataset1$'Outcomes')) # defining levels to be the unique order of algos
+ggplot(dataset1, aes(x=dataset1$'Count', y=dataset1$'Outcomes')) +
+  geom_bar(stat='identity', fill='navy') +
+  labs(title='Outcomes', x= 'Counts', y='Outcomes') +
+  theme(
+  panel.background = element_rect(fill = "white"),      # White panel background
+  panel.grid.major.x = element_blank(),                # Clear background
+  panel.grid.major.y = element_line(color = "lightblue"), # Added horizontal blue gridlines
+  aspect.ratio=2/1.5) 
+  
+
+```
+
+# Study Types Figure
+```{r block3, eval = TRUE}
+# 7) Study Types Figure
+
+data9 <- read_excel(file, sheet= "Study types figure")
+dataset9 <- data9[20:24, c(8,9)];
+colnames(dataset9) <- c('Study Type', 'Total Studies');
+
+dataset9$'Total Studies' <- as.numeric(dataset9$'Total Studies')
+dataset9$'Study Type'<- factor(dataset9$'Study Type', levels=unique(dataset9$'Study Type')) # defining levels to be the unique order of algos
+ggplot(dataset9, aes(x=dataset9$'Total Studies', y=dataset9$'Study Type')) +
+  geom_bar(stat='identity', fill='navy') +
+  labs(title='Total Studies', x= 'Total Studies', y='Study Type') +
+  theme(
+  panel.background = element_rect(fill = "white"),      # White panel background
+  panel.grid.major.x = element_blank(),                # Clear background
+  panel.grid.major.y = element_line(color = "lightblue"), # Added horizontal blue gridlines
+  aspect.ratio=2/1.5) 
+   
+  
+```
+
+# Top 5 Models and AUC Scores
+```{r}
+# 8) Top 5 Models and AUC scores
+data5 <- read_excel(file, sheet= "Top 5 Models and AUC scores")
+RF <- data5[2:104, c(2), drop = FALSE]
+LR <- data5[2:104, c(3), drop = FALSE]
+DT <- data5[2:104, c(4), drop = FALSE]
+SVM <- data5[2:104, c(5), drop = FALSE]
+NN <- data5[2:104, c(6), drop = FALSE]
+colnames(RF) <- c('AUC')
+colnames(LR) <- c('AUC')
+colnames(DT) <- c('AUC')
+colnames(SVM) <- c('AUC')
+colnames(NN) <- c('AUC')
+
+RF$Model <- "RF"
+LR$Model <- "LR"
+DT$Model <- "DT"
+SVM$Model <- "SVM"
+NN$Model <- "NN"
+
+combined_data<-rbind(RF, LR, DT, SVM, NN)
+combined_data$AUC <- as.numeric(combined_data$AUC)
+
+ggplot(combined_data, aes(x = Model, y = AUC, fill = Model)) +
+  geom_boxplot() +
+  labs(
+    title = "Box Plot of AUC Scores by Model",
+    x = "Model",
+    y = "AUC Score"
+  ) +
+  theme_minimal()+
+  scale_fill_brewer(palette = "Set2")
+
+
+```
+
+
+---
+# LEAVE THIS COMMENT BLOCK AND EVERYTHING BELOW !!!
+---
+\newpage
+
+```{r get_labels, echo = FALSE, include = TRUE}
+  
+  # DO NOT REMOVE THIS BLOCK !!!
+
+  # This block gets all the block labels except for the setup and appendix blocks (and its own)
+  # It also adds a blank line to the end of each code block
+  
+  block_labels <- setdiff(knitr::all_labels(), c("global_options", "get_labels", "code_appendix"))
+  if(length(block_labels) > 0){
+    local({
+      if(grepl("unnamed-chunk-", block_labels[1])){
+        source_code <- c("# ----", "", knitr::knit_code$get(block_labels[1]))
+      } else {
+        source_code <- c(paste0("# ---- ", block_labels[1]), "", knitr::knit_code$get(block_labels[1]))
+      }
+      eval(parse(text = paste0('knitr::knit_code$set("', block_labels[1], '"= source_code)')))
+    })
+    for(label in block_labels[-1]){
+      local({
+        if(grepl("unnamed-chunk-", label)){
+          source_code <- c("", "# ----", "", knitr::knit_code$get(label))
+        } else {
+          source_code <- c("", paste0("# ---- ", label), "", knitr::knit_code$get(label))
+        }
+        eval(parse(text = paste0('knitr::knit_code$set("', label, '"= source_code)')))
+      })
+    }
+  }
+
+```
+
+```{r code_appendix, ref.label = block_labels, echo = TRUE, eval = FALSE, class.output = "shadebox"}
+
+  # DO NOT REMOVE THIS BLOCK !!!
+
+  # This is the block for the code appendix
+
+```
