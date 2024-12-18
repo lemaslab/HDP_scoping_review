@@ -1,0 +1,185 @@
+---
+output: pdf_document
+---
+
+```{r global_options, echo = FALSE, include = FALSE}
+
+  # DO NOT REMOVE THIS BLOCK !!!
+  
+  # setup block for setting default options
+  # include = FALSE above means block output will not be shown (for this block)
+  
+  # echo = FALSE below means block code will not be shown (for all blocks)
+  
+  knitr::opts_chunk$set(echo = FALSE, fig.width = 6, fig.height = 6)
+
+```
+
+---
+title: "Graphs for CHARMS Data"
+author: "Tanmayee Kolli"
+date: "2024-12-11"
+---
+
+
+```{r block1, eval = TRUE}
+install.packages("readxl",  repos = "https://cran.rstudio.com/")
+
+library(readxl)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+file <- "data.xlsx"
+sheets <- excel_sheets(file) # tabs within the excel sheet
+print(sheets)
+```
+
+# Distribution of Missing Checklist Elements
+```{r block2, eval = TRUE}
+# 1) Distribution of Missing Checklist Elements
+
+bins<- c("0", "1-5", "6-10", ">11") #data
+num_of_students <- c(1, 11, 46, 35)
+
+data1<- data.frame(bins, num_of_students) #created data frame
+data1$bins <- factor(data1$bins, levels=c("0", "1-5", "6-10", ">11")) #created levels to keep a certain order. Levels are possible values for factors
+
+ggplot(data1, aes(x= bins, y= num_of_students)) + #set x and y axis
+  geom_bar(stat = "identity", width = 0.4, fill = "navy") + #the height of the bar is the stated value, or 'identity'
+  labs(title = "Distribution of Missing Checklist Elements", x="CHARMS Missing Elements", y= "Number of Studies") +
+  theme(
+  panel.background = element_rect(fill = "white"),      # White panel background
+  panel.grid.major.x = element_blank(),                # Cleared background
+  panel.grid.major.y = element_line(color = "lightblue"), # Added horizontal blue gridlines
+  aspect.ratio=2/1.5) +
+  scale_x_discrete(expand = expansion(mult = c(0.1, 0.1))) #uses a multiplier of 0.1 to decrease the size of the x-axis, leaving 10% of the axis on the edges
+```
+
+# Most and Lease Reported CHARMS Items
+```{r block3, eval = TRUE}
+# 2) Most and Least Reported CHARMS Items
+
+data2 <- suppressMessages(read_excel(file, sheet= "CHARMS Checklist")) #getting data from excel sheet
+
+dataset <- data2[5:14, c(69, 70, 71)];
+colnames(dataset) <- c('Top Reported Items', 'Top % Reported', 'Bottom % Reported')
+
+dataset$'Top Reported Items'<- factor(dataset$'Top Reported Items', levels=unique(dataset$'Top Reported Items'))
+
+dataset$'Top % Reported' <- as.numeric(as.character(dataset$'Top % Reported'))
+dataset$'Bottom % Reported' <- as.numeric(as.character(dataset$'Bottom % Reported')) #ensuring these columns have numerical data
+dataset$`Top Reported Items` <- gsub("(.{30})", "\\1\n", dataset$'Top Reported Items') #ensures groups of 30 characters max are on each line
+
+
+ggplot(data = dataset, aes(x = dataset$'Top Reported Items')) +
+  geom_col(aes(y= dataset$'Top % Reported', fill='Top % Reported'), na.rm=TRUE, width=0.4, position = position_dodge(width=0.6)) +
+  geom_col(aes(y= dataset$'Bottom % Reported', fill = 'Below % Reported'), na.rm=TRUE, width=0.4, position = position_dodge(width=0.6)) +
+  scale_y_continuous(
+    name = "Top % Reported",
+    sec.axis = sec_axis(~., name= "Bottom % Reported")
+  ) +
+  scale_fill_manual(values =c("Top % Reported" = 'navy', "Below % Reported" = 'red'), name='Legend') +
+  labs(title = "Dual Y-Axis Bar Plot", x= "Reported CHARMS Items") +
+   theme( #same theme as number 1
+  panel.background = element_rect(fill = "white"),      
+  panel.grid.major.x = element_blank(),                
+  panel.grid.major.y = element_line(color = "lightblue"), 
+  axis.text.x = element_text(angle=90, hjust=0.5) #adjusts angle of x axis elements, hjust=0.5 centers the words
+  ) 
+  
+```
+
+
+# Algorithms
+```{r}
+# 3) Algorithms
+
+data3 <- suppressMessages(read_excel(file, sheet= "Algos"))
+
+data3 <- na.omit(data3)
+
+
+data3$'Algorithms'<- factor(data3$'Algorithms', levels=unique(data3$'Algorithms')) # defining levels to be the unique order of algos
+ggplot(data3, aes(x=data3$'Counts', y=data3$'Algorithms')) +
+  geom_bar(stat='identity', fill='navy') +
+  labs(title='Algorithm Frequency', x= 'Counts', y='Algorithm Type') +
+  theme(
+  panel.background = element_rect(fill = "white"),      # White panel background
+  panel.grid.major.x = element_blank(),                # Clear background
+  panel.grid.major.y = element_line(color = "lightblue"), # Added horizontal blue gridlines
+  aspect.ratio=2/1.5) 
+  
+
+```
+
+# Number of Publications
+```{r}
+# 4) Number of Publications
+
+data4 <- suppressMessages(read_excel(file, sheet= "# of publications"))
+View(data4)
+data_4 <- data4[4:8, c(3,4)]
+View(data_4)
+
+colnames(data_4) <- c('Number of Patients', 'Number of Publications'); 
+
+data_4$'Number of Patients'<- factor(data_4$'Number of Patients', levels=unique(data_4$'Number of Patients'))
+
+ggplot(data=data_4, aes(x=data_4$'Number of Patients' , y=data_4$'Number of Publications')) +
+  geom_bar(stat = "identity", width = 0.4, fill = "navy") +
+  labs(title = "Patient Sample Size Variations", x="Number of Publications", y= "Number of Patients") +
+  scale_x_discrete(labels = function(x) gsub("/", "\n", x)) + #replaces spaces between words with a line break
+  theme(
+  panel.background = element_rect(fill = "white"),      # White panel background
+  panel.grid.major.x = element_blank(),                # Clear background
+  panel.grid.major.y = element_line(color = "lightblue"), # Added horizontal blue gridlines
+  aspect.ratio=2/1.5,
+  axis.text.x = element_text(angle=45, hjust=1)) +
+  scale_x_discrete(expand = expansion(mult = c(0.1, 0.1)))
+
+```
+
+
+---
+# LEAVE THIS COMMENT BLOCK AND EVERYTHING BELOW !!!
+---
+\newpage
+
+```{r get_labels, echo = FALSE, include = TRUE}
+  
+  # DO NOT REMOVE THIS BLOCK !!!
+
+  # This block gets all the block labels except for the setup and appendix blocks (and its own)
+  # It also adds a blank line to the end of each code block
+  
+  block_labels <- setdiff(knitr::all_labels(), c("global_options", "get_labels", "code_appendix"))
+  if(length(block_labels) > 0){
+    local({
+      if(grepl("unnamed-chunk-", block_labels[1])){
+        source_code <- c("# ----", "", knitr::knit_code$get(block_labels[1]))
+      } else {
+        source_code <- c(paste0("# ---- ", block_labels[1]), "", knitr::knit_code$get(block_labels[1]))
+      }
+      eval(parse(text = paste0('knitr::knit_code$set("', block_labels[1], '"= source_code)')))
+    })
+    for(label in block_labels[-1]){
+      local({
+        if(grepl("unnamed-chunk-", label)){
+          source_code <- c("", "# ----", "", knitr::knit_code$get(label))
+        } else {
+          source_code <- c("", paste0("# ---- ", label), "", knitr::knit_code$get(label))
+        }
+        eval(parse(text = paste0('knitr::knit_code$set("', label, '"= source_code)')))
+      })
+    }
+  }
+
+```
+
+```{r code_appendix, ref.label = block_labels, echo = TRUE, eval = FALSE, class.output = "shadebox"}
+
+  # DO NOT REMOVE THIS BLOCK !!!
+
+  # This is the block for the code appendix
+
+```
